@@ -1,84 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Intelligence Security Tracking System</title>
-  <meta name="description" content="GIS-based situational awareness and security intelligence for Nigeria.">
-  <link rel="preconnect" href="https://unpkg.com">
-  <style>
-    :root{
-      --bg:#040708; --surface:#0a1014; --surface-2:#0e161b;
-      --line:#16242b; --line-soft:#122028;
-      --text:#e6f1f3; --text-mid:#93a8ab; --text-low:#5d7278;
-      --amber:#f5b942; --red:#ff4d5e; --cyan:#2dd8c3; --green:#00e676;
-      --font:'Segoe UI',system-ui,-apple-system,sans-serif;
-      --mono:'SF Mono',Menlo,Consolas,monospace;
-    }
-    *{box-sizing:border-box;margin:0;padding:0}
-    body{
-      background:var(--bg);color:var(--text);font-family:var(--font);
-      min-height:100vh;display:grid;place-items:center;padding:24px;
-      background-image:
-        radial-gradient(900px 500px at 20% -5%,rgba(245,185,66,.07),transparent 60%),
-        radial-gradient(700px 400px at 100% 100%,rgba(45,216,195,.05),transparent 60%);
-    }
-    .wrap{max-width:660px;text-align:center}
-    .badge{
-      display:inline-flex;align-items:center;gap:8px;
-      border:1px solid var(--line);background:var(--surface-2);
-      padding:6px 14px;border-radius:999px;
-      font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-      color:var(--amber);font-family:var(--mono);margin-bottom:26px;
-    }
-    .dot{width:7px;height:7px;border-radius:50%;background:var(--amber);
-      box-shadow:0 0 10px var(--amber);animation:p 2s ease-in-out infinite}
-    @keyframes p{0%,100%{opacity:1}50%{opacity:.35}}
-    h1{font-size:34px;font-weight:650;letter-spacing:-.02em;line-height:1.18}
-    h1 span{color:var(--amber)}
-    p.lede{color:var(--text-mid);font-size:15px;line-height:1.65;margin:16px auto 30px;max-width:520px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:30px}
-    .card{
-      border:1px solid var(--line);background:var(--surface);
-      border-radius:10px;padding:16px 14px;text-align:left;
-    }
-    .card b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;
-      color:var(--text);margin-bottom:5px}
-    .card i{font-style:normal;font-size:11.5px;color:var(--text-low);line-height:1.5}
-    .status{
-      border-top:1px solid var(--line-soft);padding-top:20px;
-      font-family:var(--mono);font-size:11.5px;color:var(--text-low);
-      display:flex;gap:10px;justify-content:center;flex-wrap:wrap
-    }
-    .status b{color:var(--cyan);font-weight:500}
-    .sep{color:var(--line)}
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#040708" />
+<meta name="description" content="Intelligence Security Tracking System — GIS-based situational awareness and security intelligence for Nigeria." />
+<title>Overview · Intelligence Security Tracking System</title>
+
+<!-- Typography (degrades to system geometric sans offline) -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+<!-- Vendored (no CDN dependency at runtime) -->
+<!-- Apply theme before first paint to avoid a flash of the wrong palette -->
+<script>
+  (function () {
+    try {
+      var p = localStorage.getItem('ists.theme') || 'dark';
+      var r = p === 'system'
+        ? (matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark')
+        : p;
+      document.documentElement.setAttribute('data-theme', r);
+      var pr = JSON.parse(localStorage.getItem('ists.prefs') || '{}');
+      document.documentElement.setAttribute('data-density', pr.density || 'comfortable');
+      document.documentElement.setAttribute('data-motion', pr.motion || 'full');
+    } catch (e) {}
+  })();
+</script>
+
+<link rel="stylesheet" href="vendor/leaflet/leaflet.css" />
+
+<link rel="stylesheet" href="css/tokens.css" />
+<link rel="stylesheet" href="css/base.css" />
+<link rel="stylesheet" href="css/shell.css" />
+<link rel="stylesheet" href="css/dashboard.css" />
+<link rel="stylesheet" href="css/explore.css" />
+<link rel="stylesheet" href="css/overrides.css" />
+
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cpath d='M20 2.6 35.2 11v18L20 37.4 4.8 29V11L20 2.6Z' fill='none' stroke='%23f5b942' stroke-width='2'/%3E%3Ccircle cx='20' cy='20' r='4' fill='%23f5b942'/%3E%3C/svg%3E" />
 </head>
 <body>
-  <main class="wrap">
-    <div class="badge"><span class="dot"></span> Deployment verified</div>
-    <h1>Intelligence <span>Security</span><br>Tracking System</h1>
-    <p class="lede">
-      GIS-based situational awareness for Nigeria. This repository is live and
-      GitHub Pages is serving correctly — the application shell is next.
-    </p>
 
-    <div class="grid">
-      <div class="card"><b>Map GIS</b><i>Leaflet, same engine and drill path as the minerals platform</i></div>
-      <div class="card"><b>Vanilla stack</b><i>HTML5, CSS3, ES modules — no frameworks</i></div>
-      <div class="card"><b>SPA shell</b><i>Persistent sidebar and topbar, no reload on navigation</i></div>
-      <div class="card"><b>Dark AMOLED</b><i>High-density intelligence design language</i></div>
-    </div>
+<!-- Boot splash: shown until the shell is constructed -->
+<div id="boot">
+  <div class="boot-in">
+    <svg width="46" height="46" viewBox="0 0 40 40" fill="none">
+      <path d="M20 2.6 35.2 11v18L20 37.4 4.8 29V11L20 2.6Z" stroke="#f5b942" stroke-width="1.6" opacity=".9"/>
+      <path d="M20 9.4 29.4 15v10L20 30.6 10.6 25V15L20 9.4Z" stroke="#2dd8c3" stroke-width="1" opacity=".5"/>
+      <circle cx="20" cy="20" r="3.4" fill="#f5b942"/>
+    </svg>
+    <div class="boot-t">Intelligence Security Tracking System</div>
+    <div class="boot-s">Initialising geospatial services</div>
+    <div class="boot-bar"><i></i></div>
+  </div>
+</div>
 
-    <div class="status">
-      <span>Pipeline <b>ready</b></span><span class="sep">·</span>
-      <span>Awaiting <b>specification</b></span><span class="sep">·</span>
-      <span id="stamp">—</span>
-    </div>
-  </main>
-  <script>
-    document.getElementById('stamp').textContent =
-      'Built ' + new Date().toISOString().slice(0, 10);
-  </script>
+<!-- The application shell mounts here, once. -->
+<div id="root"></div>
+
+<noscript>
+  <div style="padding:40px;color:#e8f2f2;font-family:sans-serif">
+    Intelligence Security Tracking System requires JavaScript to run.
+  </div>
+</noscript>
+
+<script src="vendor/leaflet/leaflet.js"></script>
+<script type="module" src="js/main.js"></script>
 </body>
 </html>
