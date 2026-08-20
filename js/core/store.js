@@ -1,14 +1,11 @@
 /**
  * Tiny observable application store.
- * Holds cross-module state (selected state, active filters, map view) so that
- * switching modules preserves context. Replace/extend freely when the Laravel
- * API is wired in — modules only ever read via store.get() and subscribe().
  */
 
 class Store {
   constructor(initial = {}) {
     this._state = initial;
-    this._subs = new Map(); // key -> Set<fn>
+    this._subs = new Map();
     this._any = new Set();
   }
 
@@ -24,7 +21,6 @@ class Store {
     this._any.forEach((fn) => fn(this._state, changed));
   }
 
-  /** subscribe('selectedState', fn) or subscribe(fn) for any change */
   subscribe(key, fn) {
     if (typeof key === 'function') { this._any.add(key); return () => this._any.delete(key); }
     if (!this._subs.has(key)) this._subs.set(key, new Set());
@@ -34,31 +30,33 @@ class Store {
 }
 
 export const store = new Store({
-  // shell
-  route: 'overview',
+  route: 'command',
   railCollapsed: false,
 
-  // geographic drill context: nation -> state -> lga -> local -> prospect
-  drill: { level: 'nation', nation: 'Nigeria', state: null, lga: null, prospect: null },
-  selectedState: null,
+  drill: { level: 'state', nation: 'Nigeria', state: 'Zamfara', lga: null, prospect: null },
+  selectedState: { name: 'Zamfara', code: 'ZA' },
   hoveredState: null,
-  /** Cross-module navigation request, consumed by the receiving module. */
   pendingFocus: null,
+  investigationId: 'INV-001',
 
-  // map view
-  basemap: 'vector',          // 'vector' | 'satellite'
-  zoom: 6,
+  basemap: 'vector',
+  zoom: 9,
   showLabels: true,
   showGraticule: true,
 
-  // layer + filter state (drives map rendering; API-ready shape)
-  layers: { deposits: true, prospectivity: true, graticule: true, risk: false, titles: false, infrastructure: false },
+  layers: {
+    graticule: true, labels: true, lgas: true, places: true, roads: true, forest: true,
+    incidents: true, heat: true, risk: false, emergency: true, search: true,
+    towers: true, devices: true, trails: true,
+    facilities: true, units: true,
+    deposits: true, prospectivity: true,
+  },
   filters: {
-    resources: ['gold', 'lithium', 'tin', 'oil', 'gas', 'lead', 'barite', 'iron'],
-    prospectivity: 'all',     // 'all' | 'high' | 'moderate'
-    risk: 'all',              // 'all' | 'high' | 'medium' | 'low'
+    resources: ['armed', 'abduction', 'banditry', 'civil', 'infra', 'other'],
+    prospectivity: 'all',
+    risk: 'all',
   },
 
-  // data status (later: populated from API health endpoint)
-  dataStatus: { online: true, latencyMs: 42, lastSync: 'now' },
+  dataStatus: { online: true, latencyMs: 38, lastSync: '08:42 WAT', telecom: 'SIMULATION' },
+  alerts: [],
 });

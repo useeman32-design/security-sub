@@ -1,19 +1,5 @@
 /**
- * SHARED LAYER CATALOGUE
- * ======================
- * One definition of the map's layer stack, consumed by every module that
- * renders the map. Adding a layer here surfaces it everywhere automatically.
- *
- * PORTED FROM THE MINERALS PLATFORM. The mechanism is unchanged; the layer
- * list below is a security-domain placeholder — replace the items with the
- * real layers once the specification lands, but keep the shape:
- *
- *   { id, label, color, def?, soon?, hint? }
- *
- *   id    unique key, also the key used in the layer on/off store
- *   def   true = on by default
- *   soon  true = greyed out, shows a "SOON" badge, cannot be toggled
- *   hint  small explanatory line under the label
+ * SHARED LAYER CATALOGUE — Zamfara operations
  */
 
 export const LAYER_GROUPS = [
@@ -22,27 +8,38 @@ export const LAYER_GROUPS = [
     items: [
       { id: 'graticule', label: 'Coordinate grid', color: '#2dd8c3', def: true },
       { id: 'labels',    label: 'Place labels',    color: '#93a8ab', def: true },
+      { id: 'lgas',      label: 'LGA boundaries',  color: '#5eead4', def: true,
+        hint: 'Zamfara 14 LGAs' },
+      { id: 'places',    label: 'Cities & villages', color: '#e8f2f2', def: true },
+      { id: 'roads',     label: 'Roads & highways', color: '#9aa7b0', def: true },
+      { id: 'forest',    label: 'Forest / bush areas', color: '#1f6b4a', def: true },
     ],
   },
   {
     group: 'Situational',
     items: [
-      { id: 'incidents', label: 'Incidents',       color: '#ff4d5e', def: true,
-        hint: 'Point events on the operational timeline' },
-      { id: 'heat',      label: 'Incident density', color: '#ff8a3d', def: true,
-        hint: 'Weighted concentration surface' },
-      { id: 'lgas',      label: 'LGA boundaries',  color: '#5eead4', def: false,
-        hint: 'Needs a selected state · auto at zoom 8.5+' },
-      { id: 'risk',      label: 'Threat level',    color: '#f5b942', def: false,
-        hint: 'States tinted by assessed threat level' },
+      { id: 'incidents',  label: 'Incident locations', color: '#ff4d5e', def: true },
+      { id: 'heat',       label: 'Risk heatmap',       color: '#ff8a3d', def: true },
+      { id: 'risk',       label: 'LGA risk tint',      color: '#f5b942', def: false },
+      { id: 'emergency',  label: 'Emergency calls',    color: '#2dd8c3', def: true },
+      { id: 'search',     label: 'Search areas',       color: '#8b7dff', def: true },
     ],
   },
   {
-    group: 'Pending data service',
+    group: 'Intelligence',
     items: [
-      { id: 'assets',   label: 'Protected assets',     color: '#4d9dff', soon: true },
-      { id: 'units',    label: 'Deployed units',       color: '#00e676', soon: true },
-      { id: 'infra',    label: 'Roads & infrastructure', color: '#9aa7b0', soon: true },
+      { id: 'towers',   label: 'Telecom towers',          color: '#4d9dff', def: true,
+        hint: 'Cell IDs are simulated' },
+      { id: 'devices',  label: 'Estimated device areas',  color: '#f5b942', def: true,
+        hint: 'Uncertainty circles — not GPS' },
+      { id: 'trails',   label: 'Movement trails',         color: '#ff8a3d', def: true },
+    ],
+  },
+  {
+    group: 'Forces',
+    items: [
+      { id: 'facilities', label: 'Security facilities', color: '#00e676', def: true },
+      { id: 'units',      label: 'Emergency units',     color: '#4dffa6', def: true },
     ],
   },
 ];
@@ -51,7 +48,6 @@ export const LAYER_INDEX = Object.fromEntries(
   LAYER_GROUPS.flatMap((g) => g.items.map((it) => [it.id, it]))
 );
 
-/** Default on/off map, used to seed the store and the reset action. */
 export function defaultLayerState() {
   const out = {};
   LAYER_GROUPS.forEach((g) => g.items.forEach((it) => {
@@ -60,13 +56,7 @@ export function defaultLayerState() {
   return out;
 }
 
-/**
- * Single implementation of "turn layer X on/off", so every module that shows
- * the map can never drift apart.
- *
- * @returns {{ok: boolean, reason?: string}}
- */
-export function applyLayer(nmap, id, on, { store, toast } = {}) {
+export function applyLayer(nmap, id, on, { store, toast, ops } = {}) {
   const meta = LAYER_INDEX[id];
   if (!meta) return { ok: false, reason: 'Unknown layer' };
   if (meta.soon) {
@@ -77,15 +67,18 @@ export function applyLayer(nmap, id, on, { store, toast } = {}) {
   if (id === 'labels') {
     nmap.setLabels(on);
   } else if (id === 'lgas') {
-    const st = store?.get('selectedState');
-    if (on) {
-      if (!st) { toast?.('Select a state first to load its LGAs'); return { ok: false, reason: 'no-state' }; }
-      nmap.showLgas(st.code, { explicit: true });
-    } else {
-      nmap.hideLgas();
-    }
-  } else {
-    nmap.toggleLayer(id, on);
+    if (on) nmap.showLgas('ZA', { explicit: true });
+    else nmap.hideLgas();
+  } else if (id === 'graticule') {
+    nmap.toggleLayer('graticule', on);
+  } else if (id === 'heat') {
+    nmap.toggleLayer('prospectivity', on);
+  } else if (id === 'incidents') {
+    nmap.toggleLayer('deposits', on);
+  } else if (id === 'risk') {
+    nmap.toggleLayer('risk', on);
+  } else if (ops) {
+    ops.setVisible(id, on);
   }
 
   if (store) store.set({ layers: { ...store.get('layers'), [id]: on } });

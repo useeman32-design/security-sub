@@ -108,7 +108,7 @@ export class Router {
     entry.mod?.onShow?.();
 
     this.current = id;
-    document.title = `${def.title} · Intelligence Security Tracking System`;
+    document.title = `${def.title} · Zamfara SIC`;
     this._subs.forEach((fn) => fn(id, def));
     this._navigating = false;
   }

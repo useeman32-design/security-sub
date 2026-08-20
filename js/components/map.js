@@ -52,13 +52,14 @@ function inRing(x, y, ring) {
 }
 
 export class NigeriaMap {
-  constructor(container, { api, onSelect, onHover, onLgaSelect } = {}) {
+  constructor(container, { api, onSelect, onHover, onLgaSelect, jurisdiction = null } = {}) {
     this.uid = 'nmap-' + (++MAP_SEQ);
     container.dataset.nmap = this.uid;
     this.interceptClicks = null;
     this.suppressSelection = false;
     this.root = container;
     this.api = api;
+    this.jurisdiction = jurisdiction;
     this.onSelect = onSelect || (() => {});
     this.onHover = onHover || (() => {});
     this.onLgaSelect = onLgaSelect || null;
@@ -70,7 +71,7 @@ export class NigeriaMap {
   }
 
   async init() {
-    const canvas = this.root.querySelector('#map-canvas');
+    const canvas = this.root.querySelector('.map-canvas') || this.root.querySelector('#map-canvas');
 
     this.map = L.map(canvas, {
       center: NG_CENTER,
@@ -128,10 +129,19 @@ export class NigeriaMap {
       // While a draw tool is armed, background clicks must not wipe the
       // current state/LGA selection.
       if (this.suppressSelection) return;
-      if (!e.originalEvent._stateHit) this.clearSelection();
+      if (!e.originalEvent._stateHit && !this.jurisdiction) this.clearSelection();
     });
 
-    this.map.fitBounds(NG_BOUNDS, { padding: [26, 26], animate: false });
+    if (this.jurisdiction && this.stateLayers.has(this.jurisdiction)) {
+      const layer = this.stateLayers.get(this.jurisdiction);
+      this.lockView(true);
+      this.map.fitBounds(layer.getBounds(), { padding: [36, 36], maxZoom: 9.4, animate: false });
+      this.selectState(this.jurisdiction, { zoom: false });
+      const code = layer.feature?.properties?.code;
+      if (code) this.showLgas(code, { explicit: true });
+    } else {
+      this.map.fitBounds(NG_BOUNDS, { padding: [26, 26], animate: false });
+    }
     this._onZoom();
 
     // Re-fit the national extent when the stage resizes (responsive breakpoints,
@@ -450,9 +460,10 @@ export class NigeriaMap {
 
     // Heat blooms recede as local detail takes over — at prospect scale the
     // real prospectivity raster replaces them entirely.
-    const heatOpacity = z >= 11 ? 0.08 : z >= 9.5 ? 0.18 : z >= 8 ? 0.42 : 1;
+    const heatOpacity = z >= 11 ? 0.18 : z >= 9.5 ? 0.35 : z >= 8 ? 0.55 : 1;
     const heatPane = this.map.getPane('heat');
-    if (heatPane) heatPane.style.opacity = store.get('layers').prospectivity ? heatOpacity : 0;
+    const ly = store.get('layers') || {};
+    if (heatPane) heatPane.style.opacity = (ly.heat ?? ly.prospectivity) ? heatOpacity : 0;
 
     // Graticule densifies visually at depth
     const gp = this.map.getPane('graticule');
@@ -536,7 +547,11 @@ export class NigeriaMap {
       prev.getElement?.()?.classList.remove('ng-state-selected');
     }
 
-    if (this.selected === name) { this.clearSelection(); return; }
+    if (this.selected === name) {
+      if (this.jurisdiction) return;
+      this.clearSelection();
+      return;
+    }
 
     this.selected = name;
     const layer = this.stateLayers.get(name);
@@ -587,26 +602,35 @@ export class NigeriaMap {
   setBasemap(kind) {
     store.set({ basemap: kind });
 
-    if (kind === 'satellite' && !this.layers.tiles) {
-      // Real imagery when the deployment has network access.
-      const tiles = L.tileLayer(
-        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-        { maxZoom: 17, opacity: 0.85, crossOrigin: true }
-      );
+    const url = kind === 'terrain'
+      ? 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png'
+      : 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+
+    if ((kind === 'satellite' || kind === 'terrain') && !this.layers.tiles) {
+      const tiles = L.tileLayer(url, {
+        maxZoom: 17, opacity: kind === 'terrain' ? 0.72 : 0.85, crossOrigin: true,
+      });
       tiles.on('tileerror', () => {
         // Offline / blocked: fall back to the synthetic terrain treatment.
         this.root.classList.add('sat-fallback');
       });
       tiles.addTo(this.map);
-      tiles.getContainer().style.filter = 'saturate(.62) brightness(.58) contrast(1.12)';
+      tiles.getContainer().style.filter = kind === 'terrain'
+        ? 'saturate(.7) brightness(.55) contrast(1.05)'
+        : 'saturate(.62) brightness(.58) contrast(1.12)';
       this.layers.tiles = tiles;
-    } else if (kind !== 'satellite' && this.layers.tiles) {
+    } else if (kind !== 'satellite' && kind !== 'terrain' && this.layers.tiles) {
       this.map.removeLayer(this.layers.tiles);
       this.layers.tiles = null;
       this.root.classList.remove('sat-fallback');
+    } else if ((kind === 'satellite' || kind === 'terrain') && this.layers.tiles) {
+      this.map.removeLayer(this.layers.tiles);
+      this.layers.tiles = null;
+      this.root.classList.remove('sat-fallback');
+      return this.setBasemap(kind);
     }
 
-    this.root.classList.toggle('is-satellite', kind === 'satellite');
+    this.root.classList.toggle('is-satellite', kind === 'satellite' || kind === 'terrain');
     this.refreshStateStyles();
     if (this._lgaShown) { const c = this._lgaShown; this.hideLgas({ keepRequest: true }); this.showLgas(c); }
   }

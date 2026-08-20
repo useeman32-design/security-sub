@@ -4,7 +4,7 @@
  * Persisted to localStorage; emits `nmi:theme` so the map can restyle.
  */
 
-const KEY = 'nmi.theme';
+const KEY = 'ists.theme';
 const media = matchMedia('(prefers-color-scheme: light)');
 
 export const theme = {

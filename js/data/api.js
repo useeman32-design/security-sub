@@ -1,12 +1,10 @@
 /**
  * DATA ACCESS LAYER
- * =================
- * Every module talks to the backend through this object and nothing else.
- * Today it reads static files from /data; swapping in a PHP/Laravel API means
- * changing the bodies here and nothing in the modules.
- *
- * Ported from the minerals platform, reduced to what the map needs at boot.
+ * Every module talks to the backend through this object.
+ * Today: simulation fixtures. Tomorrow: authorized PHP/Laravel adapters.
  */
+
+import * as sim from './sim.js';
 
 const _cache = new Map();
 
@@ -20,37 +18,75 @@ async function _json(path) {
   return p;
 }
 
+function clone(x) { return JSON.parse(JSON.stringify(x)); }
+
 export const api = {
-  /** Clear memoised responses — call after a data-source switch. */
+  mode: 'SIMULATION',
+
   clearCache() { _cache.clear(); },
 
-  /** 36 states + the FCT as ADM1 polygons. */
   getStateBoundaries() {
     return _json('data/nigeria-states.geojson');
   },
 
-  /**
-   * LGA polygons for one state, by two-letter code (see data/lga/index.json).
-   * Loaded on demand — all 774 at once is far too heavy for the browser.
-   */
   getLgas(stateCode) {
     return _json(`data/lga/${stateCode}.geojson`);
   },
 
-  /**
-   * Point events rendered on the map.
-   * The map component expects: { id, name, lat, lng, resource, status, state }
-   * where `resource` keys into CATEGORY_META in js/data/fixtures.js.
-   *
-   * Returns [] until the incident service exists — the map handles an empty
-   * set cleanly, so the app runs end to end today.
-   */
+  /** Point events the map engine already knows how to draw. */
   async getDeposits() {
-    return [];
+    return sim.incidentsAsDeposits();
   },
 
-  /** Topbar / sidebar health readout. */
   async getSystemHealth() {
-    return { tiles: 'ISTS-VEC v1.0', latencyMs: 38, lastSync: 'just now' };
+    return {
+      tiles: 'ZAM-VEC v1.0',
+      latencyMs: 38,
+      lastSync: sim.META.lastSync,
+      telecom: sim.META.feedMode,
+      online: true,
+    };
+  },
+
+  async getMeta() { return sim.META; },
+  async getOfficer() { return sim.OFFICER; },
+  async getLgaIndex() { return clone(sim.LGAS); },
+  async getPlaces() { return clone(sim.PLACES); },
+  async getTowers() { return clone(sim.TOWERS); },
+  async getIncidents() { return clone(sim.INCIDENTS); },
+  async getIncident(id) { return clone(sim.INCIDENTS.find((i) => i.id === id) || null); },
+  async getDevices() { return clone(sim.DEVICES); },
+  async getDevice(id) { return clone(sim.DEVICES.find((d) => d.id === id) || null); },
+  async getCalls(deviceId) {
+    const rows = deviceId ? sim.CALLS.filter((c) => c.device === deviceId || c.otherId === deviceId) : sim.CALLS;
+    return clone(rows);
+  },
+  async getLocations(deviceId) { return clone(sim.LOCATIONS[deviceId] || []); },
+  async getNetwork(deviceId) { return sim.networkFor(deviceId); },
+  async getUnits() { return clone(sim.UNITS); },
+  async getFacilities() { return clone(sim.FACILITIES); },
+  async getEmergency() { return clone(sim.EMERGENCY); },
+  async getEvents() { return clone(sim.EVENTS); },
+  async getAlerts() { return clone(sim.ALERTS); },
+  async getAiAlerts() { return clone(sim.AI_ALERTS); },
+  async getSources() { return clone(sim.SOURCES); },
+  async getAudit() { return clone(sim.AUDIT); },
+  async getReports() { return clone(sim.REPORTS); },
+  async getRoads() { return clone(sim.ROADS); },
+  async getForest() { return clone(sim.FOREST); },
+  async getSearchAreas() { return clone(sim.SEARCH_AREAS); },
+  async getKpiTrends() { return sim.KPI_TRENDS; },
+  async getHeat() { return sim.heatFromRisk(); },
+
+  logAudit(entry) {
+    sim.AUDIT.unshift({
+      time: new Date().toISOString(),
+      actor: sim.OFFICER.name,
+      action: entry.action || 'VIEW',
+      object: entry.object,
+      ip: '10.12.4.18',
+    });
   },
 };
+
+export { sim };

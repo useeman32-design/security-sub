@@ -1,13 +1,6 @@
 /**
- * INTELLIGENCE SECURITY TRACKING SYSTEM — application entry point
- * ===============================================================
- * Boots the persistent shell once, registers every module with the router,
- * and hands control over. Adding a module later = one entry in MODULES; the
- * shell, design system and navigation need no changes.
- *
- * Ported from the Nigeria Mineral Intelligence platform. The shell, router,
- * map, layer system and design tokens are the SAME CODE — only the module
- * list and the domain data differ.
+ * ZAMFARA SECURITY INTELLIGENCE & EMERGENCY RESPONSE
+ * Command platform entry — vanilla ES modules, one Leaflet engine.
  */
 
 import { buildShell } from './components/shell.js';
@@ -15,40 +8,40 @@ import { Router } from './core/router.js';
 import { store } from './core/store.js';
 import { theme } from './core/theme.js';
 import { toast } from './core/utils.js';
-import { createExplore } from './modules/explore.js';
-import { createPlaceholder } from './modules/placeholder.js';
+import { createCommand } from './modules/command.js';
+import { createLive } from './modules/live.js';
+import { createIncidents } from './modules/incidents.js';
+import { createCalls } from './modules/calls.js';
+import { createDevices } from './modules/devices.js';
+import { createLocation } from './modules/location.js';
+import { createMovement } from './modules/movement.js';
+import { createRisk } from './modules/risk.js';
+import { createEmergency } from './modules/emergency.js';
+import { createUnits } from './modules/units.js';
+import { createReports } from './modules/reports.js';
+import { createAnalytics } from './modules/analytics.js';
+import { createSources } from './modules/sources.js';
+import { createAudit } from './modules/audit.js';
+import { createSettings } from './modules/settings.js';
+import { createCase } from './modules/case.js';
 
 const MODULES = [
-  { id: 'overview',  title: 'Overview',         keepAlive: true,
-    factory: () => createPlaceholder('Overview',
-      'National situational picture: live incident counts, threat posture by state, and the operational feed.') },
-
-  { id: 'explore',   title: 'Explore Map',      keepAlive: true,
-    factory: () => createExplore() },
-
-  { id: 'incidents', title: 'Incidents',        keepAlive: true,
-    factory: () => createPlaceholder('Incidents',
-      'Searchable incident register with date range, category, state/LGA and severity filters.') },
-
-  { id: 'threat',    title: 'Threat Analysis',  keepAlive: true,
-    factory: () => createPlaceholder('Threat Analysis',
-      'Weighted threat scoring per area with contributing factors and confidence.') },
-
-  { id: 'assets',    title: 'Protected Assets', keepAlive: true,
-    factory: () => createPlaceholder('Protected Assets',
-      'Critical infrastructure and protected sites with proximity exposure analysis.') },
-
-  { id: 'units',     title: 'Deployments',      keepAlive: true,
-    factory: () => createPlaceholder('Deployments',
-      'Deployed units, coverage gaps and response-time modelling.') },
-
-  { id: 'reports',   title: 'Reports',          keepAlive: false,
-    factory: () => createPlaceholder('Reports',
-      'Report workspace: build, preview and export situation reports to PDF, Excel and CSV.') },
-
-  { id: 'data',      title: 'Data Center',      keepAlive: true,
-    factory: () => createPlaceholder('Data Center',
-      'Dataset catalogue with provenance, refresh status, quality score and "used by" module links.') },
+  { id: 'command',   title: 'Command Center',        keepAlive: true,  factory: () => createCommand() },
+  { id: 'live',      title: 'Live Intelligence',     keepAlive: true,  factory: () => createLive() },
+  { id: 'incidents', title: 'Incidents',             keepAlive: true,  factory: () => createIncidents() },
+  { id: 'calls',     title: 'Call Intelligence',     keepAlive: true,  factory: () => createCalls() },
+  { id: 'devices',   title: 'Device Intelligence',   keepAlive: true,  factory: () => createDevices() },
+  { id: 'location',  title: 'Location Tracking',     keepAlive: true,  factory: () => createLocation() },
+  { id: 'movement',  title: 'Movement Analysis',     keepAlive: true,  factory: () => createMovement() },
+  { id: 'risk',      title: 'Risk & Threat Map',     keepAlive: true,  factory: () => createRisk() },
+  { id: 'emergency', title: 'Emergency Calls',       keepAlive: true,  factory: () => createEmergency() },
+  { id: 'units',     title: 'Security Units',        keepAlive: true,  factory: () => createUnits() },
+  { id: 'reports',   title: 'Intelligence Reports',  keepAlive: false, factory: () => createReports() },
+  { id: 'analytics', title: 'Analytics',             keepAlive: false, factory: () => createAnalytics() },
+  { id: 'case',      title: 'Investigation',         keepAlive: true,  factory: () => createCase() },
+  { id: 'sources',   title: 'Data Sources',          keepAlive: false, factory: () => createSources() },
+  { id: 'audit',     title: 'Audit Logs',            keepAlive: false, factory: () => createAudit() },
+  { id: 'settings',  title: 'Settings',              keepAlive: false, factory: () => createSettings() },
 ];
 
 function boot() {
@@ -61,25 +54,24 @@ function boot() {
     title: m.title, keepAlive: m.keepAlive, factory: m.factory,
   }));
 
-  router.onChange((id) => shell.setActive(id));
+  router.onChange((id) => {
+    shell.setActive(id);
+    store.set({ route: id });
+    document.title = `${MODULES.find((m) => m.id === id)?.title || id} · Zamfara SIC`;
+  });
   shell.onNav((id) => router.navigate(id));
-  router.start('overview');
+  router.start('command');
 
-  // Topbar affordances
   document.getElementById('btn-theme')?.addEventListener('click', () => {
     const t = theme.toggle();
     toast(`${t === 'light' ? 'Light' : 'Dark'} theme`);
   });
-  document.getElementById('btn-bell')?.addEventListener('click',
-    () => toast('Notification centre arrives with the alerting service'));
   document.getElementById('btn-user')?.addEventListener('click',
-    () => toast('Account menu arrives with the auth service'));
+    () => toast('Account menu is bound to the future auth service'));
   document.getElementById('loc-pill')?.addEventListener('click', () => {
-    const d = store.get('drill');
-    toast(d.state ? `Context: ${d.state}` : 'Context: national extent');
+    toast('Jurisdiction locked to Zamfara State');
   });
 
-  // Drop the boot splash once the first view is painted
   requestAnimationFrame(() => {
     const b = document.getElementById('boot');
     if (b) { b.classList.add('is-out'); setTimeout(() => b.remove(), 420); }
