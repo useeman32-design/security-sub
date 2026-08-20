@@ -43,7 +43,7 @@ export function buildShell(mountPoint) {
           ${brandMark(30)}
           <div class="brand-text">
             <span class="l1">Zamfara SIC</span>
-            <span class="l2">Command Platform</span>
+            <span class="l2">Command v2 · ZJSOC</span>
           </div>
         </div>
 
