@@ -6,8 +6,8 @@ import { mapChrome, bootMap, bindMapChrome } from '../components/map-workspace.j
 export function createRisk() {
   let view, nmap, ops;
   async function mount(host) {
-    view = document.createElement('div');
-    view.className = 'view view-flush view-command';
+    view = host;
+    host.classList.add('view-command');
     const lgas = await api.getLgaIndex();
     view.innerHTML = `
       <div class="cmd">
@@ -29,7 +29,6 @@ export function createRisk() {
           </aside>
         </div>
       </div>`;
-    host.appendChild(view);
     $('#rk-list', view).innerHTML = lgas.slice().sort((a,b)=>b.risk-a.risk).map((l) => `
       <div class="risk-row">
         <div class="risk-top">

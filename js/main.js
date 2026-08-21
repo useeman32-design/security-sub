@@ -52,6 +52,7 @@ function boot() {
 
   MODULES.forEach((m) => router.register(m.id, {
     title: m.title, keepAlive: m.keepAlive, factory: m.factory,
+    chrome: ['command', 'location', 'movement', 'risk', 'emergency', 'units', 'case'].includes(m.id) ? 'map' : 'page',
   }));
 
   router.onChange((id) => {

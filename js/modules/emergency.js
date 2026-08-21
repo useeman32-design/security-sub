@@ -6,8 +6,8 @@ import { mapChrome, bootMap, bindMapChrome } from '../components/map-workspace.j
 export function createEmergency() {
   let view, nmap, ops;
   async function mount(host) {
-    view = document.createElement('div');
-    view.className = 'view view-flush view-command';
+    view = host;
+    host.classList.add('view-command');
     const rows = await api.getEmergency();
     view.innerHTML = `
       <div class="cmd">
@@ -22,7 +22,6 @@ export function createEmergency() {
           </aside>
         </div>
       </div>`;
-    host.appendChild(view);
     $('#em-list', view).innerHTML = rows.map((e) => `
       <article class="em-card">
         <div class="em-top"><b>${e.id}</b> ${badge(e.pri === 'P1' ? 'high' : e.pri === 'P2' ? 'med' : 'low', e.pri)}</div>
@@ -39,6 +38,6 @@ export function createEmergency() {
   return {
     mount,
     onShow() { requestAnimationFrame(() => nmap?.invalidate()); },
-    destroy() { ops?.destroy(); nmap?.destroy(); view?.remove(); },
+    destroy() { ops?.destroy(); nmap?.destroy(); },
   };
 }

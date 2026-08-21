@@ -6,8 +6,8 @@ import { mapChrome, bootMap, bindMapChrome } from '../components/map-workspace.j
 export function createUnits() {
   let view, nmap, ops;
   async function mount(host) {
-    view = document.createElement('div');
-    view.className = 'view view-flush view-command';
+    view = host;
+    host.classList.add('view-command');
     const rows = await api.getUnits();
     view.innerHTML = `
       <div class="cmd">
@@ -31,7 +31,6 @@ export function createUnits() {
           </aside>
         </div>
       </div>`;
-    host.appendChild(view);
     const boot = await bootMap($('#un-map', view));
     nmap = boot.nmap; ops = boot.ops;
     bindMapChrome(view, nmap, ops);
@@ -40,6 +39,6 @@ export function createUnits() {
   return {
     mount,
     onShow() { requestAnimationFrame(() => nmap?.invalidate()); },
-    destroy() { ops?.destroy(); nmap?.destroy(); view?.remove(); },
+    destroy() { ops?.destroy(); nmap?.destroy(); },
   };
 }

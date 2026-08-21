@@ -9,8 +9,8 @@ export function createCase() {
   let view, nmap, ops;
 
   async function mount(host) {
-    view = document.createElement('div');
-    view.className = 'view view-flush view-command';
+    view = host;
+    host.classList.add('view-command');
     const focus = store.get('pendingFocus');
     const id = (focus?.type === 'device' && focus.id) || store.get('investigationId') || 'INV-001';
     store.set({ pendingFocus: null, investigationId: id });
@@ -97,6 +97,6 @@ export function createCase() {
   return {
     mount,
     onShow() { requestAnimationFrame(() => nmap?.invalidate()); },
-    destroy() { ops?.destroy(); nmap?.destroy(); view?.remove(); },
+    destroy() { ops?.destroy(); nmap?.destroy(); },
   };
 }

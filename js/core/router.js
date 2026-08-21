@@ -89,7 +89,7 @@ export class Router {
     let entry = this.mounted.get(id);
     if (!entry) {
       const view = document.createElement('section');
-      view.className = 'view';
+      view.className = 'view' + (def.chrome === 'map' ? ' view-flush view-map' : ' view-ops');
       view.id = 'view-' + id;
       view.setAttribute('role', 'region');
       view.setAttribute('aria-label', def.title);

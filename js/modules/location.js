@@ -8,8 +8,8 @@ export function createLocation() {
   let view, nmap, ops;
 
   async function mount(host) {
-    view = document.createElement('div');
-    view.className = 'view view-flush view-command';
+    view = host;
+    host.classList.add('view-command');
     const id = store.get('investigationId') || 'INV-001';
     const [dev, loc] = await Promise.all([api.getDevice(id), api.getLocations(id)]);
     const cur = loc[loc.length - 1];
@@ -59,7 +59,6 @@ export function createLocation() {
           </aside>
         </div>
       </div>`;
-    host.appendChild(view);
     const boot = await bootMap($('#loc-map', view));
     nmap = boot.nmap; ops = boot.ops;
     bindMapChrome(view, nmap, ops);
@@ -72,6 +71,6 @@ export function createLocation() {
   return {
     mount,
     onShow() { requestAnimationFrame(() => nmap?.invalidate()); },
-    destroy() { ops?.destroy(); nmap?.destroy(); view?.remove(); },
+    destroy() { ops?.destroy(); nmap?.destroy(); },
   };
 }

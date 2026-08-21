@@ -57,11 +57,17 @@ export async function bootMap(container, { onSelect, onLgaSelect } = {}) {
     jurisdiction: 'Zamfara',
     onSelect: (props) => onSelect?.({ kind: 'state', data: props }),
     onLgaSelect: (props) => onLgaSelect?.({ kind: 'lga', data: props }),
+    onDeposit: (d) => onSelect?.({ kind: 'incident', data: d }),
   });
   await nmap.init();
   const ops = createOpsOverlay(nmap, { onSelect });
   await ops.loadAll(store.get('investigationId') || 'INV-001');
   container.querySelector('.map-loading')?.classList.add('is-hidden');
+  const fix = () => nmap.invalidate();
+  requestAnimationFrame(fix);
+  setTimeout(fix, 80);
+  setTimeout(fix, 320);
+  setTimeout(fix, 900);
   return { nmap, ops };
 }
 

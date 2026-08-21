@@ -8,8 +8,8 @@ export function createMovement() {
   let view, nmap, ops, stop;
 
   async function mount(host) {
-    view = document.createElement('div');
-    view.className = 'view view-flush view-command';
+    view = host;
+    host.classList.add('view-command');
     const id = store.get('investigationId') || 'INV-001';
     const [dev, loc] = await Promise.all([api.getDevice(id), api.getLocations(id)]);
     view.innerHTML = `
@@ -37,8 +37,6 @@ export function createMovement() {
           </aside>
         </div>
       </div>`;
-    host.appendChild(view);
-
     const seq = loc.map((p, i) => {
       const prev = loc[i - 1];
       let dist = '—', dur = '—';
@@ -89,6 +87,6 @@ export function createMovement() {
   return {
     mount,
     onShow() { requestAnimationFrame(() => nmap?.invalidate()); },
-    destroy() { stop?.(); ops?.destroy(); nmap?.destroy(); view?.remove(); },
+    destroy() { stop?.(); ops?.destroy(); nmap?.destroy(); },
   };
 }
